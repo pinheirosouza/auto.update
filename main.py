@@ -5,13 +5,15 @@ import os
 import sys
 import threading
 import json
+import time
 
+start = time.time()
 class ProgressPercentage(object):
 
-    def __init__(self, bucketName, fileS3Path):
+    def __init__(self, bucketName, configS3Path):
         self._bucketName = bucketName
-        self._fileS3Path = fileS3Path
-        self._size = s3_client.head_object(Bucket=self._bucketName, Key=self._fileS3Path)['ContentLength']
+        self._configS3Path = configS3Path
+        self._size = s3_client.head_object(Bucket=self._bucketName, Key=self._configS3Path)['ContentLength']
         self._seen_so_far = 0
         self._lock = threading.Lock()
 
@@ -22,7 +24,7 @@ class ProgressPercentage(object):
             percentage = (self._seen_so_far / self._size) * 100
             sys.stdout.write(
                 "\r%s  %s / %s  (%.2f%%)" % (
-                    self._fileS3Path, self._seen_so_far, self._size,
+                    self._configS3Path, self._seen_so_far, self._size,
                     percentage))
             sys.stdout.flush()
 
@@ -31,22 +33,31 @@ class ProgressPercentage(object):
 
 # VARIÁVEIS
 bucketName = "auto.updater"
-fileS3Path = 'update/config.json'
-fileDownloadPath = 's3Config.json'
+configS3Path = 'update/config.json'
+configDownloadPath = 's3Config.json'
 configPath = 'config.json'
 selfUpdate = False
 
-newDirectoryS3Path = 'update'
+updaterS3Path = 'update/DS4Updater.exe'
+updaterDownloadPath = 'DS4Updater.exe'
+exe = "DS4Windows.exe"
+
+ACCESS_ID = ''
+S_ACCESS_ID = ''
 # /VARIÁVEIS
 
+with open(configPath) as json_file:
+    credentials = json.load(json_file)
+    ACCESS_ID = credentials["ACCESS_ID"]
+    S_ACCESS_ID = credentials["S_ACCESS_ID"]
 
-s3_client = boto3.client('s3')
+s3_client = boto3.client('s3', aws_access_key_id = ACCESS_ID, aws_secret_access_key = S_ACCESS_ID)
 
-progress = ProgressPercentage(bucketName, fileS3Path)
+configDownloadProgress = ProgressPercentage(bucketName, configS3Path)
 
 try:
-    s3_client.download_file(bucketName, fileS3Path, fileDownloadPath,
-    Callback=progress
+    s3_client.download_file(bucketName, configS3Path, configDownloadPath,
+    Callback=configDownloadProgress
 )
 
 except ClientError as err:
@@ -58,7 +69,7 @@ if os.path.isfile(configPath):
     with open(configPath) as json_file:
         localConfigObj = json.load(json_file)
     
-    with open(fileDownloadPath) as json_file:
+    with open(configDownloadPath) as json_file:
         s3ConfigObj = json.load(json_file)
     
     if localConfigObj["APP_NAME"] == s3ConfigObj["APP_NAME"]:
@@ -72,9 +83,22 @@ if os.path.isfile(configPath):
 else:
     autoUpdate = True
 
-os.remove(fileDownloadPath)
+os.remove(configDownloadPath)
 
 if autoUpdate:
-    print("\nFazer download, executar atualização, executar impressora")
+    updaterDownloadProgress = ProgressPercentage(bucketName, updaterS3Path)
+    try:
+        s3_client.download_file(bucketName, updaterS3Path, updaterDownloadPath,
+        Callback=updaterDownloadProgress
+    )
+    except ClientError as err:
+        logging.error(err)
+
+    os.startfile(updaterDownloadPath)
+
 else:
-    print("\nExecutar Impressora")
+    os.startfile(exe)
+
+end = time.time()
+
+print("\nTempo de execução:", (end-start))
