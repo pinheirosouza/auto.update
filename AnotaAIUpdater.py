@@ -5,6 +5,8 @@ import os
 import sys
 import threading
 import json
+import ctypes
+import elevate
 
 class Updater():
     # bucketName = Nome do bucket no S3;    
@@ -76,7 +78,7 @@ class Updater():
 bucketName = 'auto.updater'
 configS3Path = 'update/config.json'
 configDownloadPath = 's3Config.json'
-configLocalPath = 'config.json'
+configLocalPath = os.getenv('LOCALAPPDATA')+'\\tempteste\\config.json'
 update = False
 
 exeS3Path = 'update/DS4Updater.exe'
@@ -88,19 +90,22 @@ ACCESS_ID = ''
 S_ACCESS_ID = ''
 # /VARIÁVEIS
 
-with open(configLocalPath) as json_file:
-    credentials = json.load(json_file)
-    ACCESS_ID = credentials["ACCESS_ID"]
-    S_ACCESS_ID = credentials["S_ACCESS_ID"]
+def main():
+    with open(configLocalPath) as json_file:
+        credentials = json.load(json_file)
+        ACCESS_ID = credentials["ACCESS_ID"]
+        S_ACCESS_ID = credentials["S_ACCESS_ID"]
 
-updater = Updater("auto.updater", ACCESS_ID, S_ACCESS_ID)
+    updater = Updater("auto.updater", ACCESS_ID, S_ACCESS_ID)
 
-doUpdate = updater.checkNewUpdates(configS3Path, configDownloadPath, configLocalPath)
+    doUpdate = updater.checkNewUpdates(configS3Path, configDownloadPath, configLocalPath)
 
-if (doUpdate == False):
-    os.startfile(exeLocalPath)
+    if (doUpdate == False):
+        os.startfile(exeLocalPath)
 
-else:
-    updater.update(exeS3Path, exeDownloadPath, exeLocalPath, processToKill)
+    else:
+        updater.update(exeS3Path, exeDownloadPath, exeLocalPath, processToKill)
 
-sys.exit()
+# todos os privilégios:
+# elevate.elevate()
+main()
