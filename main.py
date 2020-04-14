@@ -29,8 +29,6 @@ class ProgressPercentage(object):
             sys.stdout.flush()
 
 
-
-
 # VARIÁVEIS
 bucketName = "auto.updater"
 configS3Path = 'update/config.json'
