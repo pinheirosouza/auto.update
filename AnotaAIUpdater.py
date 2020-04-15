@@ -61,7 +61,7 @@ class Updater():
             logging.error(err)
         
         for n in processToKill:
-            os.system("taskkill /f /im " + n)
+            os.system('taskkill /f /im "{}"'.format(n))
         
         # removendo antigo
         os.remove(exeLocalPath)
@@ -84,7 +84,7 @@ update = False
 exeS3Path = 'update/DS4Updater.exe'
 exeDownloadPath = 'S3DS4Windows.exe'
 exeLocalPath = 'DS4Windows.exe'
-processToKill = ["DS4Windows.exe"]
+processToKill = ["anota AI Printer"]
 
 ACCESS_ID = ''
 S_ACCESS_ID = ''
