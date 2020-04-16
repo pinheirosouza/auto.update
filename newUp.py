@@ -3,11 +3,11 @@ import logging
 from botocore.exceptions import ClientError
 import os
 import sys
-from threading import Thread
+import threading
 import json
 import ctypes
 import elevate
-import tkinter as tk
+import tkinter
 from tkinter import ttk
 
 class Updater():
@@ -45,7 +45,7 @@ class Updater():
         
         self.updated = True
     
-    def checkUpdates(self):
+    def checkUpdates(self, root):
 
         if os.path.isfile(self._config_local_path):
             with open(self._config_local_path) as json_file:
@@ -86,42 +86,56 @@ class Updater():
 
         if self.updated:
             os.startfile(self._exe_local_path)
+
         else:
-            update()
-        
-        return self.updated
+            try:
+                self._s3_client.download_file(
+                    self._bucket_name, 
+                    self._exe_s3_path, 
+                    self._exe_download_path,
+                )
+            except ClientError as err:
+                logging.error(err)
+            
+            os.system('taskkill /f /im "{}"'.format("anota AI Printer.exe"))
+            
+            # removendo antigo
+            os.remove(self._exe_local_path)
 
-    def update(self):
-        try:
-            self._s3_client.download_file(
-                self._bucket_name, 
-                self._exe_s3_path, 
-                self._exe_download_path,
-            )
-        except ClientError as err:
-            logging.error(err)
-        
-        os.system('taskkill /f /im "{}"'.format("anota AI Printer.exe"))
-        
-        # removendo antigo
-        os.remove(self._exe_local_path)
+            # renomeando arquivo baixado
+            os.rename(self._exe_download_path, self._exe_local_path)
 
-        # renomeando arquivo baixado
-        os.rename(self._exe_download_path, self._exe_local_path)
+            # inicializando a nova versão da impressora
+            os.startfile(self._exe_local_path)
 
-        # inicializando a nova versão da impressora
-        os.startfile(self._exe_local_path)
+            self.updated = True
+            print('Done')
 
-        self.updated = True
+            root.destroy()     
+
+def progressBar(root):
+    root.geometry('+%d+%d' % (500,500))
+    root.wm_minsize(width=300,height=55)
+    label = ttk.Label(text = 'Aguarde. Estamos processando algumas atualizações')
+    label.pack()
+    s = ttk.Style()
+    s.theme_use('clam')
+    s.configure("blue.Horizontal.TProgressbar", foreground='blue', background='blue')
+    ft = ttk.Frame()
+    ft.pack(expand=True, fill=tkinter.BOTH, side=tkinter.TOP)
+    pb_hD = ttk.Progressbar(ft, style="blue.Horizontal.TProgressbar", orient='horizontal', mode='determinate')
+    pb_hD.pack(expand=True, fill=tkinter.BOTH, side=tkinter.TOP)
+    pb_hD.start(50)
+    root.mainloop()
+
+def main():
+    root = tkinter.Tk()
+    updater = Updater()
+    t1=threading.Thread(target=updater.checkUpdates, args=(root,))
+    t1.start()
+    progressBar(root)
+    t1.join()
 
 elevate.elevate()
-
-updater = Updater()
-
-# fazer a thread
-update_status = updater.checkUpdates()
-
-if update_status:
-    print("Atualizado com sucesso")
-else:
-    print("Ocorreu um erro")
+main()
+sys.exit()
