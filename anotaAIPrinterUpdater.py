@@ -5,11 +5,8 @@ import os
 import sys
 import threading
 import json
-import ctypes
 from elevate import elevate
 import tkinter
-from tkinter import ttk
-from tkinter import messagebox
 
 class Updater():
     def __init__ (self, 
@@ -133,14 +130,14 @@ def disable_window_butons():
 def progressBar(root):
     root.geometry('+%d+%d' % (500,500))
     root.wm_minsize(width=300,height=55)
-    label = ttk.Label(text = 'Aguarde. Estamos processando algumas atualizações')
+    label = tkinter.ttk.Label(text = 'Aguarde. Estamos processando algumas atualizações')
     label.pack()
-    s = ttk.Style()
+    s = tkinter.ttk.Style()
     s.theme_use('clam')
     s.configure("blue.Horizontal.TProgressbar", foreground='blue', background='blue')
-    ft = ttk.Frame()
+    ft = tkinter.ttk.Frame()
     ft.pack(expand=True, fill=tkinter.BOTH, side=tkinter.TOP)
-    pb_hD = ttk.Progressbar(ft, style="blue.Horizontal.TProgressbar", orient='horizontal', mode='determinate')
+    pb_hD = tkinter.ttk7.Progressbar(ft, style="blue.Horizontal.TProgressbar", orient='horizontal', mode='determinate')
     pb_hD.pack(expand=True, fill=tkinter.BOTH, side=tkinter.TOP)
     pb_hD.start(50)
     root.mainloop()
