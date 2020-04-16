@@ -9,6 +9,7 @@ import ctypes
 from elevate import elevate
 import tkinter
 from tkinter import ttk
+from tkinter import messagebox
 
 class Updater():
     def __init__ (self, 
@@ -56,8 +57,9 @@ class Updater():
                 self._config_s3_path = config_local_obj["CONFIG_S3_PATH"]
                 self._exe_s3_path = config_local_obj["EXE_S3_PATH"]
                 self._local_version = config_local_obj["APP_VERSION"]
+
         else:
-            # Error Handler
+            tkinter.messagebox.showerror("Erro", "config.json não existe")
             print("config.json não existe")
             root.quit()
             os._exit(1)
@@ -86,11 +88,15 @@ class Updater():
 
 
         if self.updated:
-            os.remove(self._config_download_path)
-            os.startfile(self._exe_local_path)
-            print('Done')
+            if os.path.isfile(self._exe_local_path):
+                os.remove(self._config_download_path)
+                os.startfile(self._exe_local_path)
+                print('Done')
+            else:
+                without_exe_local = tkinter.messagebox.showwarning("Arquivo não encontrado", "'anotaAIPrinter.exe não encontrado.' Baixaremos um novo executável para concluir as atualizações")
+                self.updated = False
 
-        else:
+        if not self.updated:
             try:
                 self._s3_client.download_file(
                     self._bucket_name, 
@@ -103,7 +109,9 @@ class Updater():
             os.system('taskkill /f /im "{}"'.format("anota AI Printer.exe"))
             
             # removendo arquivos antigos
-            os.remove(self._exe_local_path)
+            if os.path.isfile(self._exe_local_path):
+                os.remove(self._exe_local_path)
+
             os.remove(self._config_local_path)
 
             # renomeando arquivos baixados
