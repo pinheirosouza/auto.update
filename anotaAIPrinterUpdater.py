@@ -6,7 +6,7 @@ import sys
 import threading
 import json
 import ctypes
-import elevate
+from elevate import elevate
 import tkinter
 from tkinter import ttk
 
@@ -18,10 +18,10 @@ class Updater():
         # config_s3_path:str,
         # exe_s3_path: str,
 
-        config_local_path: str = "config.json",
+        # config_local_path: str = "config.json",
         exe_local_path: str = "anotaAIPrinter.exe",
 
-        config_download_path: str = "S3config.json",
+        # config_download_path: str = "S3config.json",
         exe_download_path: str = "S3anotaAIPrinter.exe",
         ):
 
@@ -34,10 +34,10 @@ class Updater():
         self._exe_s3_path = ""
 
         
-        self._config_local_path = os.getenv('LOCALAPPDATA') +'\\tempteste\\config.json'
+        self._config_local_path = os.getenv('LOCALAPPDATA') +'\\anotaAIPrinter\\config.json'
         self._exe_local_path = exe_local_path
 
-        self._config_download_path = config_download_path
+        self._config_download_path = os.getenv('LOCALAPPDATA') +'\\anotaAIPrinter\\S3config.json'
         self._exe_download_path = exe_download_path
         
         self._local_version = ""
@@ -57,8 +57,10 @@ class Updater():
                 self._exe_s3_path = config_local_obj["EXE_S3_PATH"]
                 self._local_version = config_local_obj["APP_VERSION"]
         else:
-            # important
-            print("Mensagem mandando entrar em contato com o suporte por falta do config.py")
+            # Error Handler
+            print("config.json não existe")
+            root.quit()
+            os._exit(1)
 
         self._s3_client = boto3.client(
             's3', 
@@ -82,10 +84,11 @@ class Updater():
         if self._s3_version != self._local_version:
             self.updated = False
 
-        os.remove(self._config_download_path)
 
         if self.updated:
+            os.remove(self._config_download_path)
             os.startfile(self._exe_local_path)
+            print('Done')
 
         else:
             try:
@@ -99,11 +102,13 @@ class Updater():
             
             os.system('taskkill /f /im "{}"'.format("anota AI Printer.exe"))
             
-            # removendo antigo
+            # removendo arquivos antigos
             os.remove(self._exe_local_path)
+            os.remove(self._config_local_path)
 
-            # renomeando arquivo baixado
+            # renomeando arquivos baixados
             os.rename(self._exe_download_path, self._exe_local_path)
+            os.rename(self._config_download_path, self._config_local_path)
 
             # inicializando a nova versão da impressora
             os.startfile(self._exe_local_path)
@@ -111,7 +116,11 @@ class Updater():
             self.updated = True
             print('Done')
 
-            root.destroy()     
+        root.quit()
+        os._exit(1)    
+
+def disable_window_butons():
+    pass
 
 def progressBar(root):
     root.geometry('+%d+%d' % (500,500))
@@ -128,14 +137,16 @@ def progressBar(root):
     pb_hD.start(50)
     root.mainloop()
 
-def main():
+def start():
     root = tkinter.Tk()
+    root.overrideredirect(True)
+    root.protocol("WM_DELETE_WINDOW", disable_window_butons)
     updater = Updater()
     t1=threading.Thread(target=updater.checkUpdates, args=(root,))
     t1.start()
     progressBar(root)
     t1.join()
+    
 
-elevate.elevate()
-main()
-sys.exit()
+elevate(show_console=False)
+start()
