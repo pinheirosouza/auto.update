@@ -7,6 +7,8 @@ import threading
 import json
 from elevate import elevate
 import tkinter
+from tkinter import ttk
+from tkinter import messagebox
 
 class Updater():
     def __init__ (self, 
@@ -56,7 +58,7 @@ class Updater():
                 self._local_version = config_local_obj["APP_VERSION"]
 
         else:
-            tkinter.messagebox.showerror("Erro", "config.json não existe")
+            messagebox.showerror("Erro", "config.json não existe")
             print("config.json não existe")
             root.quit()
             os._exit(1)
@@ -90,7 +92,7 @@ class Updater():
                 os.startfile(self._exe_local_path)
                 print('Done')
             else:
-                without_exe_local = tkinter.messagebox.showwarning("Arquivo não encontrado", "'anotaAIPrinter.exe não encontrado.' Baixaremos um novo executável para concluir as atualizações")
+                without_exe_local = messagebox.showwarning("Arquivo não encontrado", "'anotaAIPrinter.exe não encontrado.' Baixaremos um novo executável para concluir as atualizações")
                 self.updated = False
 
         if not self.updated:
@@ -130,14 +132,14 @@ def disable_window_butons():
 def progressBar(root):
     root.geometry('+%d+%d' % (500,500))
     root.wm_minsize(width=300,height=55)
-    label = tkinter.ttk.Label(text = 'Aguarde. Estamos processando algumas atualizações')
+    label = ttk.Label(text = 'Aguarde. Estamos processando algumas atualizações')
     label.pack()
-    s = tkinter.ttk.Style()
+    s = ttk.Style()
     s.theme_use('clam')
     s.configure("blue.Horizontal.TProgressbar", foreground='blue', background='blue')
-    ft = tkinter.ttk.Frame()
+    ft = ttk.Frame()
     ft.pack(expand=True, fill=tkinter.BOTH, side=tkinter.TOP)
-    pb_hD = tkinter.ttk7.Progressbar(ft, style="blue.Horizontal.TProgressbar", orient='horizontal', mode='determinate')
+    pb_hD = ttk.Progressbar(ft, style="blue.Horizontal.TProgressbar", orient='horizontal', mode='determinate')
     pb_hD.pack(expand=True, fill=tkinter.BOTH, side=tkinter.TOP)
     pb_hD.start(50)
     root.mainloop()
@@ -153,5 +155,5 @@ def start():
     t1.join()
     
 
-elevate(show_console=False)
+elevate()
 start()
